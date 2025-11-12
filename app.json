@@ -21,10 +21,16 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "ycom.kaizensoftware.amazonproductscom.kaizensoftware.amazonproducts"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "81c4d396-6497-4df1-b945-a1c59b297a31"
+      }
     }
   }
 }
