@@ -5,26 +5,51 @@ import {
   StyleSheet,
   FlatList,
   Text,
-  ActivityIndicator,
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSearch } from '../hooks/useSearch';
+import { useSearchHistory } from '../hooks/useSearchHistory';
 import { ProductCard } from '../components/ProductCard';
+import { ProductCardSkeleton } from '../components/Skeleton';
+import { EmptyState } from '../components/EmptyState';
+import { ErrorView } from '../components/ErrorView';
 import { Product } from '../types/product';
 
-export const SearchScreen: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const { products, loading, error, searchProducts } = useSearch();
+interface SearchScreenProps {
+  onProductPress?: (asin: string) => void;
+}
 
-  const handleSearch = () => {
+export const SearchScreen: React.FC<SearchScreenProps> = ({ onProductPress }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showHistory, setShowHistory] = useState(false);
+  const { products, loading, error, searchProducts } = useSearch();
+  const { history, addToHistory, removeFromHistory, clearHistory } = useSearchHistory();
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setShowHistory(false);
+    await addToHistory(searchQuery);
     searchProducts(searchQuery);
   };
 
+  const handleHistoryItemPress = (query: string) => {
+    setSearchQuery(query);
+    setShowHistory(false);
+    searchProducts(query);
+  };
+
   const handleProductPress = (product: Product) => {
-    console.log('Product pressed:', product.asin);
+    onProductPress?.(product.asin);
+  };
+
+  const handleInputFocus = () => {
+    if (history.length > 0 && !products.length && !loading) {
+      setShowHistory(true);
+    }
   };
 
   return (
@@ -45,6 +70,7 @@ export const SearchScreen: React.FC = () => {
           value={searchQuery}
           onChangeText={setSearchQuery}
           onSubmitEditing={handleSearch}
+          onFocus={handleInputFocus}
           returnKeyType="search"
           editable={!loading}
         />
@@ -64,25 +90,52 @@ export const SearchScreen: React.FC = () => {
         </Pressable>
       </View>
 
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+      {showHistory && history.length > 0 && (
+        <View style={styles.historyContainer}>
+          <View style={styles.historyHeader}>
+            <Text style={styles.historyTitle}>Búsquedas recientes</Text>
+            <Pressable onPress={clearHistory}>
+              <Text style={styles.clearText}>Limpiar</Text>
+            </Pressable>
+          </View>
+          <ScrollView style={styles.historyList}>
+            {history.map((item, index) => (
+              <View key={index} style={styles.historyItem}>
+                <Pressable 
+                  style={styles.historyItemButton}
+                  onPress={() => handleHistoryItemPress(item)}
+                >
+                  <Text style={styles.historyIcon}>🕐</Text>
+                  <Text style={styles.historyText}>{item}</Text>
+                </Pressable>
+                <Pressable onPress={() => removeFromHistory(item)}>
+                  <Text style={styles.removeIcon}>✕</Text>
+                </Pressable>
+              </View>
+            ))}
+          </ScrollView>
         </View>
+      )}
+
+      {error && (
+        <ErrorView message={error} onRetry={() => searchProducts(searchQuery)} />
       )}
 
       {loading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF9900" />
-          <Text style={styles.loadingText}>Buscando productos...</Text>
-        </View>
+        <FlatList
+          data={[1, 2, 3, 4, 5]}
+          keyExtractor={(item) => item.toString()}
+          renderItem={() => <ProductCardSkeleton />}
+          contentContainerStyle={styles.listContent}
+        />
       )}
 
-      {!loading && products.length === 0 && !error && (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>
-            Ingresa un término de búsqueda para comenzar
-          </Text>
-        </View>
+      {!loading && products.length === 0 && !error && !showHistory && (
+        <EmptyState
+          icon="🔍"
+          title="Busca productos de Amazon"
+          message="Ingresa un término para comenzar a explorar miles de productos"
+        />
       )}
 
       {!loading && products.length > 0 && (
@@ -153,39 +206,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  errorContainer: {
-    backgroundColor: '#fee',
+  historyContainer: {
+    backgroundColor: '#fff',
+    maxHeight: 300,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 16,
-    marginHorizontal: 16,
-    marginTop: 8,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#c00',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  errorText: {
-    color: '#c00',
+  historyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  clearText: {
     fontSize: 14,
+    color: '#FF9900',
+    fontWeight: '600',
   },
-  loadingContainer: {
+  historyList: {
+    maxHeight: 250,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f5f5f5',
+  },
+  historyItemButton: {
     flex: 1,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  loadingText: {
-    fontSize: 16,
-    color: '#666',
+  historyIcon: {
+    fontSize: 18,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
+  historyText: {
+    fontSize: 14,
+    color: '#333',
   },
-  emptyText: {
-    fontSize: 16,
+  removeIcon: {
+    fontSize: 18,
     color: '#999',
-    textAlign: 'center',
+    padding: 4,
   },
   listContent: {
     paddingVertical: 8,

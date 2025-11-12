@@ -2,15 +2,40 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { CategoryScreen } from './src/screens/CategoryScreen';
+import { ProductDetailScreen } from './src/screens/ProductDetailScreen';
 
-type Screen = 'search' | 'categories';
+type Screen = 'search' | 'categories' | 'productDetail';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('search');
+  const [selectedProductAsin, setSelectedProductAsin] = useState<string | null>(null);
+
+  const handleProductPress = (asin: string) => {
+    setSelectedProductAsin(asin);
+    setCurrentScreen('productDetail');
+  };
+
+  const handleBackFromDetail = () => {
+    setCurrentScreen('search');
+    setSelectedProductAsin(null);
+  };
+
+  if (currentScreen === 'productDetail' && selectedProductAsin) {
+    return (
+      <ProductDetailScreen 
+        asin={selectedProductAsin} 
+        onBack={handleBackFromDetail} 
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {currentScreen === 'search' ? <SearchScreen /> : <CategoryScreen />}
+      {currentScreen === 'search' ? (
+        <SearchScreen onProductPress={handleProductPress} />
+      ) : (
+        <CategoryScreen onProductPress={handleProductPress} />
+      )}
       
       <View style={styles.tabBar}>
         <Pressable

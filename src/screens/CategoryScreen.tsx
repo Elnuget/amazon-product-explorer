@@ -4,18 +4,24 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   Pressable,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useCategory } from '../hooks/useCategory';
 import { CategoryCard } from '../components/CategoryCard';
 import { ProductCard } from '../components/ProductCard';
+import { CategoryCardSkeleton, ProductCardSkeleton } from '../components/Skeleton';
+import { EmptyState } from '../components/EmptyState';
+import { ErrorView } from '../components/ErrorView';
 import { CATEGORIES } from '../constants/categories';
 import { Category } from '../types/category';
 import { Product } from '../types/product';
 
-export const CategoryScreen: React.FC = () => {
+interface CategoryScreenProps {
+  onProductPress?: (asin: string) => void;
+}
+
+export const CategoryScreen: React.FC<CategoryScreenProps> = ({ onProductPress }) => {
   const { products, loading, error, selectedCategory, fetchProductsByCategory, clearCategory } = useCategory();
 
   const handleCategoryPress = (category: Category) => {
@@ -23,7 +29,7 @@ export const CategoryScreen: React.FC = () => {
   };
 
   const handleProductPress = (product: Product) => {
-    console.log('Product pressed:', product.asin);
+    onProductPress?.(product.asin);
   };
 
   const handleBackPress = () => {
@@ -45,26 +51,30 @@ export const CategoryScreen: React.FC = () => {
         </View>
 
         {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
+          <ErrorView message={error} onRetry={() => selectedCategory && fetchProductsByCategory(selectedCategory)} />
         )}
 
         {loading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FF9900" />
-            <Text style={styles.loadingText}>Cargando productos...</Text>
-          </View>
+          <FlatList
+            key="products-loading"
+            data={[1, 2, 3, 4, 5]}
+            keyExtractor={(item) => item.toString()}
+            renderItem={() => <ProductCardSkeleton />}
+            contentContainerStyle={styles.listContent}
+          />
         )}
 
         {!loading && products.length === 0 && !error && (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No se encontraron productos en esta categoría</Text>
-          </View>
+          <EmptyState
+            icon="📦"
+            title="No hay productos"
+            message="No se encontraron productos en esta categoría"
+          />
         )}
 
         {!loading && products.length > 0 && (
           <FlatList
+            key="products-list"
             data={products}
             keyExtractor={(item) => item.asin}
             renderItem={({ item }) => (
@@ -91,6 +101,7 @@ export const CategoryScreen: React.FC = () => {
       </View>
 
       <FlatList
+        key="categories-grid"
         data={CATEGORIES}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
