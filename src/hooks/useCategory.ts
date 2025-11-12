@@ -15,6 +15,10 @@ export const useCategory = () => {
     setSelectedCategory(category);
 
     try {
+      if (!category.searchQuery) {
+        throw new Error('Categoría sin término de búsqueda');
+      }
+
       const response = await AmazonApiService.searchProducts(category.searchQuery, page);
       setProducts(response.data.products || []);
     } catch (err) {
