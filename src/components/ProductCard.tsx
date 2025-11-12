@@ -5,9 +5,21 @@ import { Product } from '../types/product';
 interface ProductCardProps {
   product: Product;
   onPress?: (product: Product) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (product: Product) => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ 
+  product, 
+  onPress,
+  isFavorite = false,
+  onToggleFavorite,
+}) => {
+  const handleFavoritePress = (e: any) => {
+    e.stopPropagation();
+    onToggleFavorite?.(product);
+  };
+
   return (
     <Pressable
       style={({ pressed }) => [
@@ -23,9 +35,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress }) =>
       />
       
       <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={2}>
-          {product.product_title}
-        </Text>
+        <View style={styles.header}>
+          <Text style={styles.title} numberOfLines={2}>
+            {product.product_title}
+          </Text>
+          
+          {onToggleFavorite && (
+            <Pressable onPress={handleFavoritePress} style={styles.favoriteButton}>
+              <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+            </Pressable>
+          )}
+        </View>
         
         <View style={styles.footer}>
           {product.product_price && (
@@ -75,11 +95,24 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     justifyContent: 'space-between',
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
   title: {
+    flex: 1,
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
     lineHeight: 18,
+  },
+  favoriteButton: {
+    padding: 4,
+  },
+  favoriteIcon: {
+    fontSize: 20,
   },
   footer: {
     gap: 4,

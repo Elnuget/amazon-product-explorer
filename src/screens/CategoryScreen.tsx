@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useCategory } from '../hooks/useCategory';
+import { useFavorites } from '../hooks/useFavorites';
 import { CategoryCard } from '../components/CategoryCard';
 import { ProductCard } from '../components/ProductCard';
 import { CategoryCardSkeleton, ProductCardSkeleton } from '../components/Skeleton';
@@ -23,6 +24,7 @@ interface CategoryScreenProps {
 
 export const CategoryScreen: React.FC<CategoryScreenProps> = ({ onProductPress }) => {
   const { products, loading, error, selectedCategory, fetchProductsByCategory, clearCategory } = useCategory();
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   const handleCategoryPress = (category: Category) => {
     fetchProductsByCategory(category);
@@ -30,6 +32,10 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({ onProductPress }
 
   const handleProductPress = (product: Product) => {
     onProductPress?.(product.asin);
+  };
+
+  const handleToggleFavorite = async (product: Product) => {
+    await toggleFavorite(product);
   };
 
   const handleBackPress = () => {
@@ -78,7 +84,12 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({ onProductPress }
             data={products}
             keyExtractor={(item) => item.asin}
             renderItem={({ item }) => (
-              <ProductCard product={item} onPress={handleProductPress} />
+              <ProductCard 
+                product={item} 
+                onPress={handleProductPress}
+                isFavorite={isFavorite(item.asin)}
+                onToggleFavorite={handleToggleFavorite}
+              />
             )}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}

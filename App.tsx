@@ -3,8 +3,9 @@ import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { CategoryScreen } from './src/screens/CategoryScreen';
 import { ProductDetailScreen } from './src/screens/ProductDetailScreen';
+import { FavoritesScreen } from './src/screens/FavoritesScreen';
 
-type Screen = 'search' | 'categories' | 'productDetail';
+type Screen = 'search' | 'categories' | 'favorites' | 'productDetail';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('search');
@@ -31,10 +32,14 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      {currentScreen === 'search' ? (
+      {currentScreen === 'search' && (
         <SearchScreen onProductPress={handleProductPress} />
-      ) : (
+      )}
+      {currentScreen === 'categories' && (
         <CategoryScreen onProductPress={handleProductPress} />
+      )}
+      {currentScreen === 'favorites' && (
+        <FavoritesScreen onProductPress={handleProductPress} />
       )}
       
       <View style={styles.tabBar}>
@@ -53,6 +58,15 @@ export default function App() {
         >
           <Text style={[styles.tabText, currentScreen === 'categories' && styles.activeTabText]}>
             Categorías
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.tab, currentScreen === 'favorites' && styles.activeTab]}
+          onPress={() => setCurrentScreen('favorites')}
+        >
+          <Text style={[styles.tabText, currentScreen === 'favorites' && styles.activeTabText]}>
+            Favoritos
           </Text>
         </Pressable>
       </View>

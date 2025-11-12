@@ -13,6 +13,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useSearch } from '../hooks/useSearch';
 import { useSearchHistory } from '../hooks/useSearchHistory';
+import { useFavorites } from '../hooks/useFavorites';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/Skeleton';
 import { EmptyState } from '../components/EmptyState';
@@ -28,6 +29,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onProductPress }) =>
   const [showHistory, setShowHistory] = useState(false);
   const { products, loading, error, searchProducts } = useSearch();
   const { history, addToHistory, removeFromHistory, clearHistory } = useSearchHistory();
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -44,6 +46,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onProductPress }) =>
 
   const handleProductPress = (product: Product) => {
     onProductPress?.(product.asin);
+  };
+
+  const handleToggleFavorite = async (product: Product) => {
+    await toggleFavorite(product);
   };
 
   const handleInputFocus = () => {
@@ -143,7 +149,12 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onProductPress }) =>
           data={products}
           keyExtractor={(item) => item.asin}
           renderItem={({ item }) => (
-            <ProductCard product={item} onPress={handleProductPress} />
+            <ProductCard 
+              product={item} 
+              onPress={handleProductPress}
+              isFavorite={isFavorite(item.asin)}
+              onToggleFavorite={handleToggleFavorite}
+            />
           )}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
